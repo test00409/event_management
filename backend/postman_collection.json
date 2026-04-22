@@ -1,0 +1,847 @@
+{
+  "info": {
+    "name": "Event Staffing Platform API",
+    "description": "Production-ready two-sided event staffing platform. \n\n## Setup\n1. Import this collection into Postman\n2. Set `base_url` variable to `http://localhost:3000/api/v1`\n3. Run auth flows first to populate tokens\n\n## Test Users (after seeding)\n- SUPER_ADMIN: phone=9999999999\n- ADMIN: phone=8888888888\n- WORKER: phone=7777777777\n\n**OTP appears in server console logs**",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:3000/api/v1"},
+    {"key": "admin_token", "value": ""},
+    {"key": "user_token", "value": ""},
+    {"key": "super_admin_token", "value": ""},
+    {"key": "event_id", "value": ""},
+    {"key": "role_id", "value": ""},
+    {"key": "application_id", "value": ""},
+    {"key": "hire_id", "value": ""},
+    {"key": "chat_id", "value": ""},
+    {"key": "task_id", "value": ""},
+    {"key": "payment_id", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "🏥 Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/../health",
+            "description": "Check server is running"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth - Worker",
+      "item": [
+        {
+          "name": "1. Send OTP (Worker)",
+          "event": [{"listen": "test", "script": {"exec": ["pm.test('OTP sent', () => pm.response.to.have.status(200));", "console.log('Check server logs for OTP')"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/send-otp",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\"}"}
+          }
+        },
+        {
+          "name": "2. Verify OTP (Worker) → sets user_token",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.tokens?.accessToken) {", "  pm.collectionVariables.set('user_token', r.data.tokens.accessToken);", "  console.log('Worker token set');", "}"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/verify-otp",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\", \"otp\": \"REPLACE_WITH_OTP_FROM_LOGS\", \"name\": \"Demo Worker\"}"}
+          }
+        },
+        {
+          "name": "3. Set Password (Worker)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/set-password",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\", \"password\": \"Demo@123456\", \"confirm_password\": \"Demo@123456\"}"}
+          }
+        },
+        {
+          "name": "4. Login (Worker)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\", \"password\": \"Demo@123456\"}"}
+          }
+        },
+        {
+          "name": "5. Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/refresh",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"refresh_token\": \"REPLACE_WITH_REFRESH_TOKEN\"}"}
+          }
+        },
+        {
+          "name": "6. Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/logout",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth - Admin",
+      "item": [
+        {
+          "name": "1. Send OTP (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/admin/send-otp",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"8888888888\"}"}
+          }
+        },
+        {
+          "name": "2. Verify OTP (Admin) → sets admin_token",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.tokens?.accessToken) {", "  pm.collectionVariables.set('admin_token', r.data.tokens.accessToken);", "  console.log('Admin token set');", "}"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/admin/verify-otp",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"8888888888\", \"otp\": \"REPLACE_WITH_OTP_FROM_LOGS\"}"}
+          }
+        },
+        {
+          "name": "3. Set Password (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/set-password",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\", \"password\": \"Demo@123456\", \"confirm_password\": \"Demo@123456\"}"}
+          }
+        },
+        {
+          "name": "4. Login (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\", \"password\": \"Demo@123456\"}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth - Super Admin",
+      "item": [
+        {
+          "name": "1. Send OTP (Super Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/send-otp",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"9999999999\"}"}
+          }
+        },
+        {
+          "name": "2. Verify OTP (Super Admin) → sets super_admin_token",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.tokens?.accessToken) {", "  pm.collectionVariables.set('super_admin_token', r.data.tokens.accessToken);", "  console.log('Super Admin token set');", "}"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/verify-otp",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"9999999999\", \"otp\": \"REPLACE_WITH_OTP_FROM_LOGS\"}"}
+          }
+        },
+        {
+          "name": "3. Set Password (Super Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/set-password",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\", \"password\": \"Demo@123456\", \"confirm_password\": \"Demo@123456\"}"}
+          }
+        },
+        {
+          "name": "4. Login (Super Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"phone\": \"7777777777\", \"password\": \"Demo@123456\"}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏢 Admin Profile",
+      "item": [
+        {
+          "name": "Admin Signup (with business proof)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/admin/signup",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "company_name", "value": "EventPro Solutions Pvt Ltd", "type": "text"},
+                {"key": "company_type", "value": "Event Management", "type": "text"},
+                {"key": "contact_person", "value": "Demo Manager", "type": "text"},
+                {"key": "contact_email", "value": "demo@eventpro.com", "type": "text"},
+                {"key": "company_address", "value": "123 Business Park, Mumbai", "type": "text"},
+                {"key": "gstin", "value": "", "type": "text"},
+                {"key": "business_proof", "type": "file", "src": "/path/to/proof.pdf", "description": "Upload business proof PDF/image"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Admin Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/profile",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Get Verification Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/verification-status",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Events (Admin)",
+      "item": [
+        {
+          "name": "Create Event",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.id) pm.collectionVariables.set('event_id', r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/events",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"Corporate Gala 2025\",\n  \"description\": \"Annual corporate gala event\",\n  \"venue\": \"Grand Hyatt, Mumbai\",\n  \"city\": \"Mumbai\",\n  \"event_date\": \"2025-12-15\",\n  \"start_time\": \"18:00\",\n  \"end_time\": \"23:00\",\n  \"budget\": 75000,\n  \"required_skills\": [\"Customer Service\", \"Photography\"]\n}"}
+          }
+        },
+        {
+          "name": "List My Events",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/events?page=1&limit=10", "host": ["{{base_url}}"], "path": ["events"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "10"}]},
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/events/{{event_id}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/events/{{event_id}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"description\": \"Updated event description\", \"budget\": 80000}"}
+          }
+        },
+        {
+          "name": "Add Role to Event",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.id) pm.collectionVariables.set('role_id', r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/events/{{event_id}}/roles",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"role_name\": \"Event Photographer\",\n  \"description\": \"Cover all event sessions and networking\",\n  \"slots\": 3,\n  \"pay_per_slot\": 3500,\n  \"required_skills\": [\"Photography\", \"Editing\"],\n  \"start_time\": \"17:00\",\n  \"end_time\": \"23:30\"\n}"}
+          }
+        },
+        {
+          "name": "Get Event Roles",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/events/{{event_id}}/roles",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Publish Event",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/events/{{event_id}}/publish",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Get Event Applications",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/events/{{event_id}}/applications?status=PENDING", "host": ["{{base_url}}"], "path": ["events", "{{event_id}}", "applications"], "query": [{"key": "status", "value": "PENDING"}]},
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Get Event Tasks",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/events/{{event_id}}/tasks",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Get Event Attendance",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/events/{{event_id}}/attendance",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Mark Event Complete",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/events/{{event_id}}/complete",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Get Event Report",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/events/{{event_id}}/report",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/events/{{event_id}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "💼 Jobs (Worker)",
+      "item": [
+        {
+          "name": "Browse Jobs",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/jobs?location=Mumbai&page=1&limit=10", "host": ["{{base_url}}"], "path": ["jobs"], "query": [{"key": "location", "value": "Mumbai"}, {"key": "page", "value": "1"}, {"key": "limit", "value": "10"}]},
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Browse Jobs (filter by skill + pay)",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/jobs?skill=Photography&min_pay=2000", "host": ["{{base_url}}"], "path": ["jobs"], "query": [{"key": "skill", "value": "Photography"}, {"key": "min_pay", "value": "2000"}]},
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Get Job Details",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/jobs/{{event_id}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Get Recommended Jobs (AI Match)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/jobs/recommended",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Applications",
+      "item": [
+        {
+          "name": "Apply for Role (Worker)",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.id) pm.collectionVariables.set('application_id', r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/applications",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"event_role_id\": \"{{role_id}}\",\n  \"cover_note\": \"I have 3 years of photography experience and own professional DSLR equipment.\"\n}"}
+          }
+        },
+        {
+          "name": "My Applications (Worker)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/applications/my",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Get Application Details",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/applications/{{application_id}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Accept Application (Admin)",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.hire?.id) pm.collectionVariables.set('hire_id', r.data.hire.id);"]}}],
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/applications/{{application_id}}/status",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"status\": \"ACCEPTED\", \"admin_notes\": \"Great profile, looking forward to working with you!\"}"}
+          }
+        },
+        {
+          "name": "Reject Application (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/applications/{{application_id}}/status",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"status\": \"REJECTED\", \"admin_notes\": \"Position filled by another candidate\"}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Chat",
+      "item": [
+        {
+          "name": "Start Chat (Admin → after hire)",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.id) pm.collectionVariables.set('chat_id', r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/chats/start",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"hire_id\": \"{{hire_id}}\"}"}
+          }
+        },
+        {
+          "name": "My Chats (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/chats/my",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "My Chats (Worker)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/chats/my",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Get Chat Messages",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/chats/{{chat_id}}/messages?page=1&limit=30", "host": ["{{base_url}}"], "path": ["chats", "{{chat_id}}", "messages"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "30"}]},
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Send Message (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/chats/messages",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"chat_id\": \"{{chat_id}}\", \"content\": \"Hi! Please arrive 30 minutes early for briefing.\"}"}
+          }
+        },
+        {
+          "name": "Send Message (Worker)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/chats/messages",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"chat_id\": \"{{chat_id}}\", \"content\": \"Understood! I'll be there at 5:30 PM.\"}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "✅ Tasks",
+      "item": [
+        {
+          "name": "Assign Task (Admin)",
+          "event": [{"listen": "test", "script": {"exec": ["const r = pm.response.json();", "if (r.data?.id) pm.collectionVariables.set('task_id', r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/tasks",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"hire_id\": \"{{hire_id}}\",\n  \"title\": \"Cover Opening Ceremony\",\n  \"description\": \"Photograph the keynote and ribbon-cutting ceremony\",\n  \"location\": \"Main Hall, Stage Area\",\n  \"priority\": \"HIGH\",\n  \"notes\": \"Use wide-angle lens for crowd shots\"\n}"}
+          }
+        },
+        {
+          "name": "My Tasks (Worker)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tasks/my",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Update Task Status (Worker)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/tasks/{{task_id}}/status",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"status\": \"COMPLETED\"}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "📍 Attendance",
+      "item": [
+        {
+          "name": "Generate QR Token (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/attendance/qr/{{event_id}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Check In (Worker - QR)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/attendance/check-in",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"qr_token\": \"REPLACE_WITH_QR_TOKEN\",\n  \"latitude\": 19.0760,\n  \"longitude\": 72.8777\n}"}
+          }
+        },
+        {
+          "name": "Check In (Worker - Manual)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/attendance/check-in",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"event_id\": \"{{event_id}}\"\n}"}
+          }
+        },
+        {
+          "name": "Check Out (Worker)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/attendance/check-out",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"event_id\": \"{{event_id}}\"}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "⭐ Ratings",
+      "item": [
+        {
+          "name": "Rate Worker (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ratings",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"hire_id\": \"{{hire_id}}\",\n  \"stars\": 5,\n  \"review\": \"Excellent photographer, very professional and punctual!\",\n  \"aspects\": {\n    \"punctuality\": 5,\n    \"skill\": 5,\n    \"attitude\": 5,\n    \"communication\": 4\n  }\n}"}
+          }
+        },
+        {
+          "name": "Rate Event Manager (Worker)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ratings",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"hire_id\": \"{{hire_id}}\",\n  \"stars\": 4,\n  \"review\": \"Great organization, clear instructions, paid on time.\"\n}"}
+          }
+        },
+        {
+          "name": "Get Ratings for User",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ratings/user/USER_ID_HERE",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Payments & Wallet",
+      "item": [
+        {
+          "name": "Release Payment (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/payments/release",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"hire_id\": \"{{hire_id}}\"}"}
+          }
+        },
+        {
+          "name": "Get My Wallet (Worker)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/payments/wallet",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Withdraw from Wallet (Worker)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/payments/wallet/withdraw",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"amount\": 1500, \"notes\": \"Weekly payout\"}"}
+          }
+        },
+        {
+          "name": "Earnings History (Worker)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/earnings",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 User Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/user/profile",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/user/profile",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Rahul Sharma\",\n  \"bio\": \"Professional event photographer with 5 years experience\",\n  \"location\": \"Mumbai, Maharashtra\",\n  \"skills\": [\"Photography\", \"Videography\", \"Event Setup\", \"Customer Service\"],\n  \"portfolio_links\": [\"https://portfolio.example.com\"]\n}"}
+          }
+        },
+        {
+          "name": "Get My Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/user/stats",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Talent Pool (Admin)",
+      "item": [
+        {
+          "name": "Save Worker to Talent Pool",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/talent/save-worker",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"user_id\": \"WORKER_UUID_HERE\",\n  \"notes\": \"Excellent photographer, always punctual\",\n  \"tags\": [\"photographer\", \"reliable\", \"experienced\"]\n}"}
+          }
+        },
+        {
+          "name": "Get My Talent Pool",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/talent/workers",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "Remove from Talent Pool",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/talent/workers/WORKER_UUID_HERE",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚠️ Issue Resolution (Admin)",
+      "item": [
+        {
+          "name": "Replace Worker",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/issues/replace-worker",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"original_hire_id\": \"{{hire_id}}\",\n  \"replacement_application_id\": \"REPLACEMENT_APP_UUID\",\n  \"issue_type\": \"NO_SHOW\",\n  \"description\": \"Worker did not arrive despite confirmation\"\n}"}
+          }
+        },
+        {
+          "name": "Get Event Issues",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/issues/event/{{event_id}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Analytics (Admin)",
+      "item": [
+        {
+          "name": "Analytics Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/analytics/dashboard",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "👑 Super Admin",
+      "item": [
+        {
+          "name": "List All Admins",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/super-admin/admins?page=1&limit=20", "host": ["{{base_url}}"], "path": ["super-admin", "admins"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}]},
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}]
+          }
+        },
+        {
+          "name": "Approve Admin",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/super-admin/admin/ADMIN_PROFILE_UUID/verify",
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"action\": \"APPROVED\", \"notes\": \"All documents verified. Account approved.\"}"}
+          }
+        },
+        {
+          "name": "Reject Admin",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/super-admin/admin/ADMIN_PROFILE_UUID/verify",
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"action\": \"REJECTED\", \"notes\": \"Business proof document is unclear. Please re-submit.\"}"}
+          }
+        },
+        {
+          "name": "List All Users (Workers)",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/super-admin/users?page=1&limit=20", "host": ["{{base_url}}"], "path": ["super-admin", "users"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}]},
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}]
+          }
+        },
+        {
+          "name": "List All Events",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/super-admin/events",
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}]
+          }
+        },
+        {
+          "name": "List All Payments",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/super-admin/payments",
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}]
+          }
+        },
+        {
+          "name": "Block User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/super-admin/block-user",
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"user_id\": \"USER_UUID_HERE\",\n  \"block\": true,\n  \"reason\": \"Fraudulent activity detected\"\n}"}
+          }
+        },
+        {
+          "name": "Unblock User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/super-admin/block-user",
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"user_id\": \"USER_UUID_HERE\",\n  \"block\": false\n}"}
+          }
+        },
+        {
+          "name": "Platform Analytics",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/super-admin/analytics",
+            "header": [{"key": "Authorization", "value": "Bearer {{super_admin_token}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔒 Security Tests",
+      "item": [
+        {
+          "name": "Access Admin Route as Worker (should 403)",
+          "event": [{"listen": "test", "script": {"exec": ["pm.test('Correctly forbidden', () => pm.response.to.have.status(403));"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/events",
+            "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"title\": \"Hack attempt\", \"venue\": \"x\", \"event_date\": \"2025-12-01\", \"start_time\": \"10:00\", \"budget\": 1000}"}
+          }
+        },
+        {
+          "name": "Access Super Admin Route as Admin (should 403)",
+          "event": [{"listen": "test", "script": {"exec": ["pm.test('Correctly forbidden', () => pm.response.to.have.status(403));"]}}],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/super-admin/admins",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}]
+          }
+        },
+        {
+          "name": "No Token (should 401)",
+          "event": [{"listen": "test", "script": {"exec": ["pm.test('Correctly unauthorized', () => pm.response.to.have.status(401));"]}}],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/user/profile"
+          }
+        },
+        {
+          "name": "Invalid Token (should 401)",
+          "event": [{"listen": "test", "script": {"exec": ["pm.test('Correctly unauthorized', () => pm.response.to.have.status(401));"]}}],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/user/profile",
+            "header": [{"key": "Authorization", "value": "Bearer invalid.token.here"}]
+          }
+        },
+        {
+          "name": "Validation Failure (missing required fields, should 400)",
+          "event": [{"listen": "test", "script": {"exec": ["pm.test('Validation error returned', () => pm.response.to.have.status(400));", "pm.test('Has errors array', () => { const r = pm.response.json(); pm.expect(r.errors).to.be.an('array'); });"]}}],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/events",
+            "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"title\": \"No date event\"}"}
+          }
+        }
+      ]
+    }
+  ]
+}
